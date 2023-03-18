@@ -37,6 +37,7 @@ with open('config.yml') as f:
     config: Config = yaml.full_load(f)
 
 wx_push_config = config['wx_push']
+DURATION = config["duration"]
 
 opened_concerts: dict[str, bool] = {}
 
@@ -52,4 +53,4 @@ while True:
         if open:
             opened_concerts[concert["id"]] = True
 
-    time.sleep(1)
+    time.sleep(DURATION)
