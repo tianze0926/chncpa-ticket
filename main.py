@@ -27,11 +27,8 @@ def check(concert: Concert) -> bool:
     KEYWORD = '【开票】'
     url = f"https://ticket.chncpa.org/product-{concert['id']}.html"
     response = requests.get(url, headers=HEADERS)
-    if KEYWORD in response.text:
-        logger.info(f"{concert['name']} is open")
-        notify(wx_push_config, concert)
-        return True
-    return False
+
+    return KEYWORD in response.text
 
 with open('config.yml') as f:
     config: Config = yaml.full_load(f)
@@ -46,11 +43,16 @@ while True:
         if concert["id"] in opened_concerts:
             continue
         try:
-            open = check(concert)
+            opened = check(concert)
+            if opened:
+                opened_concerts[concert["id"]] = True
+                notify(wx_push_config, concert)
+                logger.info(f"{concert['name']} is open")
+            else:
+                logger.debug(f'{concert["name"]} not opened')
+        
         except Exception as e:
             logger.exception(e)
             break
-        if open:
-            opened_concerts[concert["id"]] = True
 
     time.sleep(DURATION)
