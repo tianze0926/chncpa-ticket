@@ -13,3 +13,4 @@ class Config(TypedDict):
     wx_push: PushConfig
     concerts: list[Concert]
     duration: float
+    timeout: float

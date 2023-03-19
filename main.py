@@ -18,7 +18,7 @@ def notify(config: PushConfig, concert: Concert):
         "url": f"https://ticket.chncpa.org/product-{concert['id']}.html",
         "verifyPay": False
     }
-    requests.post(URL, json=data)
+    requests.post(URL, json=data, timeout=TIMEOUT)
 
 def check(concert: Concert) -> bool:
     HEADERS = {
@@ -26,7 +26,7 @@ def check(concert: Concert) -> bool:
     }
     KEYWORD = '【开票】'
     url = f"https://ticket.chncpa.org/product-{concert['id']}.html"
-    response = requests.get(url, headers=HEADERS)
+    response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
 
     return KEYWORD in response.text
 
@@ -35,6 +35,7 @@ with open('config.yml') as f:
 
 wx_push_config = config['wx_push']
 DURATION = config["duration"]
+TIMEOUT = config["timeout"]
 
 opened_concerts: dict[str, bool] = {}
 

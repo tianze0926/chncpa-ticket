@@ -11,3 +11,4 @@ concerts:
     name: '捷杰耶夫与马林斯基交响乐团音乐会'
 
 duration: 30.0 # in seconds
+timeout: 10.0 # in seconds
