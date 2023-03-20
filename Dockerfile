@@ -5,4 +5,5 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
+STOPSIGNAL SIGINT
 CMD python main.py
