@@ -3,5 +3,11 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.pytestParameters": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "pylint.args": [
+        "--disable=E1120" // no-value-for-parameter
+    ]
 }

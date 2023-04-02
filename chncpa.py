@@ -3,11 +3,14 @@ Class CHNCPA
 """
 
 import time
+from random import Random
+from typing import Callable
 
 import requests
+from typeguard import check_type
 
 from logger import logger
-from type import Concert, Config
+from type import Concert, Config, DurationConfig, DurationConfigFixed, DurationConfigGamma
 
 class CHNCPA:
     """
@@ -15,10 +18,29 @@ class CHNCPA:
     """
 
     def __init__(self, config: Config) -> None:
+        check_type(config, Config)
         self.concerts = config["concerts"]
         self.push_config = config['wx_push']
-        self.duration = config["duration"]
         self.timeout = config["timeout"]
+
+        duration = config["duration"]
+        def setup_sleep(duration: DurationConfig) -> Callable[[], None]:
+            if duration["type"] == 'fixed':
+                check_type(duration, DurationConfigFixed)
+                def gen_seconds():
+                    return duration["len"]
+            elif duration["type"] == 'gamma':
+                check_type(duration, DurationConfigGamma)
+                random = Random()
+                def gen_seconds():
+                    return random.gammavariate(duration["k"], duration["theta"])
+            def sleep():
+                seconds = gen_seconds()
+                logger.debug('sleeping for %f seconds', seconds)
+                time.sleep(seconds)
+            return sleep
+        self.sleep_inner = setup_sleep(duration["inner"])
+        self.sleep_outer = setup_sleep(duration["outer"])
 
     def notify(self, concert: Concert) -> None:
         """
@@ -36,7 +58,10 @@ class CHNCPA:
             "url": f"https://ticket.chncpa.org/product-{concert['id']}.html",
             "verifyPay": False
         }
-        requests.post(url, json=data, timeout=self.timeout)
+        response = requests.post(url, json=data, timeout=self.timeout)
+        response_data = response.json()
+        if not response_data["success"]:
+            raise RuntimeError(f'notify failed: {response_data["msg"]}')
 
     def check(self, concert: Concert) -> bool:
         """
@@ -49,6 +74,8 @@ class CHNCPA:
         keyword = '【开票】'
         url = f"https://ticket.chncpa.org/product-{concert['id']}.html"
         response = requests.get(url, headers=headers, timeout=self.timeout)
+        if response.status_code != 200:
+            raise RuntimeError(f'ticket query failed: {response.status_code} {response.text}')
 
         return keyword in response.text
 
@@ -66,12 +93,14 @@ class CHNCPA:
                     if opened:
                         opened_concerts[concert["id"]] = True
                         self.notify(concert)
-                        logger.info("%s is open", concert['name'])
+                        logger.info("%s %s is open", concert["id"], concert["name"])
                     else:
-                        logger.debug('%s not opened', concert['name'])
+                        logger.debug('%s %s not opened', concert["id"], concert["name"])
 
                 except Exception as err:
                     logger.exception(err)
                     break
 
-            time.sleep(self.duration)
+                self.sleep_inner()
+
+            self.sleep_outer()

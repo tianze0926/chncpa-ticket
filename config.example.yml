@@ -1,7 +1,7 @@
 wx_push: # https://wxpusher.zjiecode.com/docs/#/
   app_token: AT_...
   topic_ids:
-    - 1234
+    - '1234'
   uids: []
 
 concerts:
@@ -10,5 +10,18 @@ concerts:
   - id: '1096295'
     name: '捷杰耶夫与马林斯基交响乐团音乐会'
 
-duration: 30.0 # in seconds
+duration: # in seconds
+  inner:
+    # type: fixed
+    # len: 60.0
+    type: gamma # https://statdist.com/distributions/gamma
+    k: 10.0
+    theta: 8.0
+  outer:
+    # type: fixed
+    # len: 300.0
+    type: gamma
+    k: 20.0
+    theta: 15.0
+
 timeout: 10.0 # in seconds
