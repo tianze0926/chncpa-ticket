@@ -1,6 +1,13 @@
+"""
+Global logger, providing colorized output for each logging level
+"""
+
 import logging
 
 class CustomFormatter(logging.Formatter):
+    """
+    Custom logging formatter
+    """
 
     grey = "\x1b[38;20m"
     blue = "\x1b[38;2;0;103;255m"
