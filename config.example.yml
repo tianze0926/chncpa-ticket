@@ -1,3 +1,8 @@
+keywords:
+  - '【即将开票】'
+  - '【预售】'
+  - '【预订】'
+
 wx_push: # https://wxpusher.zjiecode.com/docs/#/
   app_token: AT_...
   topic_ids:

@@ -19,6 +19,7 @@ class CHNCPA:
 
     def __init__(self, config: Config) -> None:
         check_type(config, Config)
+        self.keywords = config["keywords"]
         self.concerts = config["concerts"]
         self.push_config = config['wx_push']
         self.timeout = config["timeout"]
@@ -42,12 +43,11 @@ class CHNCPA:
         self.sleep_inner = setup_sleep(duration["inner"])
         self.sleep_outer = setup_sleep(duration["outer"])
 
-    def notify(self, concert: Concert) -> None:
+    def notify(self, concert: Concert, message: str) -> None:
         """
         Send a push message about the opened concert
         """
         url = 'https://wxpusher.zjiecode.com/api/send/message'
-        message = f"Concert `{concert['name']}` is now open"
         data = {
             "appToken": self.push_config["app_token"],
             "content": message,
@@ -65,19 +65,24 @@ class CHNCPA:
 
     def check(self, concert: Concert) -> bool:
         """
-        Check if the concert is open
+        Check if the concert is open.
+        Returns True if none of the keywords is found.
         """
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)'
                 ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
         }
-        keyword = '【开票】'
         url = f"https://ticket.chncpa.org/product-{concert['id']}.html"
         response = requests.get(url, headers=headers, timeout=self.timeout)
         if response.status_code != 200:
-            raise RuntimeError(f'ticket query failed: {response.status_code} {response.text}')
+            message = f'Concert `{concert["id"]}` `{concert["name"]}` query request failed: {response.status_code} {response.text}'
+            self.notify(concert, message)
+            raise RuntimeError(message)
 
-        return keyword in response.text
+        for keyword in self.keywords:
+            if keyword in response.text:
+                return False
+        return True
 
     def loop(self):
         """
@@ -92,7 +97,7 @@ class CHNCPA:
                     opened = self.check(concert)
                     if opened:
                         opened_concerts[concert["id"]] = True
-                        self.notify(concert)
+                        self.notify(concert, f'Concert `{concert["id"]}` `{concert["name"]}` is now open')
                         logger.info("%s %s is open", concert["id"], concert["name"])
                     else:
                         logger.debug('%s %s not opened', concert["id"], concert["name"])

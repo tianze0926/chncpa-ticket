@@ -50,6 +50,7 @@ class Config(TypedDict):
     """
     Root config
     """
+    keywords: list[str]
     wx_push: PushConfig
     concerts: list[Concert]
     duration: DurationsConfig
